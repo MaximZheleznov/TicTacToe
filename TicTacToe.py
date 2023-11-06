@@ -36,27 +36,32 @@ class GameFieldView:
         self._width = field.width * self._cell_size
 
     def is_coords_correct(self, x, y):
-        if 0 < x < self._width and 0 < y < self._height:
+        if self._width / 10 < x < self._width + self._width / 10 and self._height / 10 < y < self._height + self._height / 10:
             return True
 
     def get_cell_clicked(self, x, y):
         cell = []
-        if x < self._width / 3:
+        if x < self._width / 3 + self._width / 10:
             cell.append(0)
-        elif x < 2 * self._width / 3:
+        elif x < 2 * self._width / 3 + self._width / 10:
             cell.append(1)
         else:
             cell.append(2)
 
-        if y < self._height / 3:
+        if y < self._height / 3 + self._height / 10:
             cell.append(0)
-        elif y < 2 * self._height / 3:
+        elif y < 2 * self._height / 3 + self._height / 10:
             cell.append(1)
         else:
             cell.append(2)
 
         return cell
 
+    def draw(self, window):
+        pg.draw.line(window, colours.black, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), 4)
+        pg.draw.line(window, colours.black, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), 4)
+        pg.draw.line(window, colours.black, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), 4)
+        pg.draw.line(window, colours.black, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), 4)
 
 
 class GameRoundManager:
@@ -83,7 +88,7 @@ class GameWindow:
         self._game_manager = GameRoundManager(player1, player2)
         self._window = pg.display.set_mode(self._resolution)
         pg.display.set_caption(f"TicTacToe {player1.name} vs {player2.name}")
-        self._field_widget = GameFieldView(self._game_manager.field, self._window.get_width()/6)
+        self._field_widget = GameFieldView(self._game_manager.field, self._window.get_height()/4)
 
     def main_loop(self):
         is_running = True
@@ -99,6 +104,7 @@ class GameWindow:
                     if self._field_widget.is_coords_correct(x, y):
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
             self._window.fill(colours.white)
+            self._field_widget.draw(self._window)
             pg.display.flip()
 
 
