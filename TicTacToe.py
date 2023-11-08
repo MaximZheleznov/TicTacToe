@@ -57,37 +57,42 @@ class GameFieldView:
 
         return cell
 
-    def draw(self, window):
+    def draw(self, window, colour=colours.green):
         line_width = int(window.get_width() / 150)
-        pg.draw.line(window, colours.black, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
-        pg.draw.line(window, colours.black, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
-        pg.draw.line(window, colours.black, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), line_width)
-        pg.draw.line(window, colours.black, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), line_width)
+        pg.draw.line(window, colour, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
+        pg.draw.line(window, colour, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
+        pg.draw.line(window, colour, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), line_width)
+        pg.draw.line(window, colour, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), line_width)
         for column in range(self._field.width):
             for cell in range(self._field.height):
                 if self._field.cells[column][cell] == Cell.CROSS:
-                    pg.draw.line(window, colours.black, (line_width + self._width / 10 + column * self._cell_size, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
-                    pg.draw.line(window, colours.black, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size + self._cell_size * cell - line_width), (self._width / 10 + self._cell_size + self._cell_size * column - line_width, self._height / 10 + self._cell_size * cell + line_width), line_width)
+                    pg.draw.line(window, colour, (line_width + self._width / 10 + column * self._cell_size, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
+                    pg.draw.line(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size + self._cell_size * cell - line_width), (self._width / 10 + self._cell_size + self._cell_size * column - line_width, self._height / 10 + self._cell_size * cell + line_width), line_width)
                 elif self._field.cells[column][cell] == Cell.ZERO:
-                    pg.draw.ellipse(window, colours.black, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
+                    pg.draw.ellipse(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
 
 
 class GameRoundManager:
     """Class, that controls processes in game"""
     def __init__(self, player1: Player, player2: Player):
-        self._players = [player1, player2]
+        self.players = [player1, player2]
         self._current_player = 0
         self.field = GameField()
 
     def handle_click(self, cell):
         i, j = cell
+        field_not_full = False
         if self.field.cells[i][j] == Cell.VOID:
             if self._current_player == 0:
-                self.field.cells[i][j] = self._players[self._current_player].character
+                self.field.cells[i][j] = self.players[self._current_player].character
                 self._current_player += 1
             elif self._current_player == 1:
-                self.field.cells[i][j] = self._players[self._current_player].character
+                self.field.cells[i][j] = self.players[self._current_player].character
                 self._current_player -= 1
+        for column in self.field.cells:
+            field_not_full = field_not_full or Cell.VOID in column
+        if not field_not_full:
+            print("Game Over, it's a game draw!")
 
 
 class GameWindow:
@@ -99,8 +104,14 @@ class GameWindow:
         player2 = Player("Player2", Cell.ZERO)
         self._game_manager = GameRoundManager(player1, player2)
         self._window = pg.display.set_mode(self._resolution)
-        pg.display.set_caption(f"TicTacToe {player1.name} vs {player2.name}")
         self._field_widget = GameFieldView(self._game_manager.field, self._window.get_height()/4)
+
+    def setup(self):
+        print(f"Enter name, {self._game_manager.players[0].name}: ")
+        self._game_manager.players[0].name = input()
+        print(f"Enter name, {self._game_manager.players[1].name}: ")
+        self._game_manager.players[1].name = input()
+        pg.display.set_caption(f"TicTacToe {self._game_manager.players[0].name} vs {self._game_manager.players[1].name}")
 
     def main_loop(self):
         is_running = True
@@ -116,14 +127,14 @@ class GameWindow:
                     if self._field_widget.is_coords_correct(x, y):
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
             self._window.fill(colours.white)
-            self._field_widget.draw(self._window)
+            self._field_widget.draw(self._window, colours.rand_colour)
             pg.display.flip()
 
 
 def main():
-    window = GameWindow((800, 400))
+    window = GameWindow()
+    window.setup()
     window.main_loop()
-    print("Game Over!")
 
 
 if __name__ == '__main__':
