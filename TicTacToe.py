@@ -58,10 +58,18 @@ class GameFieldView:
         return cell
 
     def draw(self, window):
-        pg.draw.line(window, colours.black, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), 4)
-        pg.draw.line(window, colours.black, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), 4)
-        pg.draw.line(window, colours.black, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), 4)
-        pg.draw.line(window, colours.black, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), 4)
+        line_width = int(window.get_width() / 150)
+        pg.draw.line(window, colours.black, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
+        pg.draw.line(window, colours.black, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
+        pg.draw.line(window, colours.black, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), line_width)
+        pg.draw.line(window, colours.black, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), line_width)
+        for column in range(self._field.width):
+            for cell in range(self._field.height):
+                if self._field.cells[column][cell] == Cell.CROSS:
+                    pg.draw.line(window, colours.black, (line_width + self._width / 10 + column * self._cell_size, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
+                    pg.draw.line(window, colours.black, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size + self._cell_size * cell - line_width), (self._width / 10 + self._cell_size + self._cell_size * column - line_width, self._height / 10 + self._cell_size * cell + line_width), line_width)
+                elif self._field.cells[column][cell] == Cell.ZERO:
+                    pg.draw.ellipse(window, colours.black, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
 
 
 class GameRoundManager:
@@ -72,10 +80,14 @@ class GameRoundManager:
         self.field = GameField()
 
     def handle_click(self, cell):
-        print("Click handled. Coordinates", cell)
         i, j = cell
-        self.field.cells[i][j] = Cell.CROSS
-        print(self.field.cells)
+        if self.field.cells[i][j] == Cell.VOID:
+            if self._current_player == 0:
+                self.field.cells[i][j] = self._players[self._current_player].character
+                self._current_player += 1
+            elif self._current_player == 1:
+                self.field.cells[i][j] = self._players[self._current_player].character
+                self._current_player -= 1
 
 
 class GameWindow:
@@ -109,7 +121,7 @@ class GameWindow:
 
 
 def main():
-    window = GameWindow()
+    window = GameWindow((800, 400))
     window.main_loop()
     print("Game Over!")
 
