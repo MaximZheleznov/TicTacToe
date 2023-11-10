@@ -124,6 +124,7 @@ class GameRoundManager:
         game_over = False
         for column in range(self.field.height):
             game_over = True
+            # Check for three in line crosses or zeros in horizontal lines
             for cell in range(self.field.width - 1):
                 if self.field.cells[cell][column] == Cell.CROSS:
                     game_over = game_over and (self.field.cells[cell][column] == self.field.cells[cell+1][column])
@@ -134,7 +135,44 @@ class GameRoundManager:
             if game_over:
                 self.current_player = not self.current_player
                 break
-
+            game_over = True
+            # Check for three in line crosses or zeros in vertical lines
+            for i in range(self.field.width - 1):
+                if self.field.cells[column][i] == Cell.CROSS:
+                    game_over = game_over and (self.field.cells[column][i] == self.field.cells[column][i+1])
+                elif self.field.cells[column][i] == Cell.ZERO:
+                    game_over = game_over and (self.field.cells[column][i] == self.field.cells[column][i+1])
+                else:
+                    game_over = False
+            if game_over:
+                self.current_player = not self.current_player
+                break
+            game_over = True
+            # Check for three in line crosses or zeros in primary diagonal
+            for j in range(self.field.width - 1):
+                if self.field.cells[j][j] == Cell.CROSS:
+                    game_over = game_over and (self.field.cells[j][j] == self.field.cells[j+1][j+1])
+                elif self.field.cells[j][j] == Cell.ZERO:
+                    game_over = game_over and (self.field.cells[j][j] == self.field.cells[j+1][j+1])
+                else:
+                    game_over = False
+            if game_over:
+                self.current_player = not self.current_player
+                break
+            game_over = True
+            # Check for three in line crosses or zeros in secondary diagonal
+            j = self.field.width - 1
+            for i in range(self.field.width - 1):
+                if self.field.cells[i][j] == Cell.CROSS:
+                    game_over = game_over and (self.field.cells[i][j] == self.field.cells[i+1][j-1])
+                elif self.field.cells[i][j] == Cell.ZERO:
+                    game_over = game_over and (self.field.cells[i][j] == self.field.cells[i+1][j-1])
+                else:
+                    game_over = False
+                j -= 1
+            if game_over:
+                self.current_player = not self.current_player
+                break
         return game_over
 
 
@@ -209,10 +247,11 @@ class GameWindow:
             self._field_widget.draw(self._window, colours.rand_colour)
             self.show_results()
             if self._game_manager.is_game_over():
-                self._game_manager.field.new_round()
                 self._game_manager.players[self._game_manager.current_player].result += 1
                 pg.mixer.Sound("New_round.mp3").play()
+                self._game_manager.field.new_round()
                 self._game_manager.current_player = 0
+
             pg.display.update()
 
 
