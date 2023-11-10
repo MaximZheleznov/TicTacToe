@@ -25,6 +25,9 @@ class GameField:
         self.height = 3
         self.cells = [[Cell.VOID]*self.height for i in range(self.width)]
 
+    def new_round(self):
+        self.cells = [[Cell.VOID]*self.height for i in range(self.width)]
+
 
 class GameFieldView:
     """Class processes interaction between user and field, where game is drawn"""
@@ -85,7 +88,7 @@ class GameFieldView:
         for column in range(self._field.width):
             for cell in range(self._field.height):
                 if self._field.cells[column][cell] == Cell.CROSS:
-                    pg.draw.line(window, colour, (line_width + self._width / 10 + column * self._cell_size, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
+                    pg.draw.line(window, colour, (self._width / 10 + column * self._cell_size + line_width, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
                     pg.draw.line(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size + self._cell_size * cell - line_width), (self._width / 10 + self._cell_size + self._cell_size * column - line_width, self._height / 10 + self._cell_size * cell + line_width), line_width)
                 elif self._field.cells[column][cell] == Cell.ZERO:
                     pg.draw.ellipse(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
@@ -95,34 +98,51 @@ class GameRoundManager:
     """Class, that controls processes in game"""
     def __init__(self, player1: Player, player2: Player):
         self.players = [player1, player2]
-        self._current_player = 0
+        self.current_player = 0
         self.field = GameField()
 
     def handle_click(self, cell):
         """
-        Handles click, puts character of a current player in given cell, checks if game is not over or game field is not full
+        Handles click, puts character of a current player in given cell, checks if game field is not full
         :param cell: cell, where click was made
         :return: None
         """
         i, j = cell
-        field_not_full = False
         if self.field.cells[i][j] == Cell.VOID:
-            if self._current_player == 0:
-                self.field.cells[i][j] = self.players[self._current_player].character
-                self._current_player += 1
-            elif self._current_player == 1:
-                self.field.cells[i][j] = self.players[self._current_player].character
-                self._current_player -= 1
-        for column in self.field.cells:
-            field_not_full = field_not_full or Cell.VOID in column
-        if not field_not_full:
-            print("Game Over, it's a game draw!")
+            if self.current_player == 0:
+                self.field.cells[i][j] = self.players[self.current_player].character
+                self.current_player += 1
+            elif self.current_player == 1:
+                self.field.cells[i][j] = self.players[self.current_player].character
+                self.current_player -= 1
+
+    def is_game_over(self):
+        """
+        Checks if game is not over
+        :return: None
+        """
+        game_over = False
+        for column in range(self.field.height):
+            game_over = True
+            for cell in range(self.field.width - 1):
+                if self.field.cells[cell][column] == Cell.CROSS:
+                    game_over = game_over and (self.field.cells[cell][column] == self.field.cells[cell+1][column])
+                elif self.field.cells[cell][column] == Cell.ZERO:
+                    game_over = game_over and (self.field.cells[cell][column] == self.field.cells[cell+1][column])
+                else:
+                    game_over = False
+            if game_over:
+                self.current_player = not self.current_player
+                break
+
+        return game_over
 
 
 class GameWindow:
-    """Works with field widget and processes game round"""
+    """Works with field widget and processes game round. Window should have proportions at least 4 : 3"""
     def __init__(self, resolution=(1600, 900), fps=60):
         self._resolution = resolution
+        assert resolution[0] / resolution[1] >= 4 / 3, "Wrong resolution parameters! Resolution should have at least 4 : 3 proportions"
         self._fps = fps
         player1 = Player("Player1", Cell.CROSS)
         player2 = Player("Player2", Cell.ZERO)
@@ -147,17 +167,28 @@ class GameWindow:
         :return: None
         """
         pg.font.init()
-        font = pg.font.Font(None, 36)
+        field_not_full = False
+        font = pg.font.Font(None, int(self._window.get_height() / 20))
         player1 = font.render(self._game_manager.players[0].name, True, colours.rand_colour)
         player2 = font.render(self._game_manager.players[1].name, True, colours.rand_colour)
         result1 = font.render(str(self._game_manager.players[0].result), True, colours.rand_colour)
         result2 = font.render(str(self._game_manager.players[1].result), True, colours.rand_colour)
+        game_over = font.render("Game Over", True, colours.rand_colour)
+        game_draw = font.render("It's a Game Draw", True, colours.rand_colour)
+        game_turn = font.render(str(self._game_manager.players[self._game_manager.current_player].name + "'s turn!"), True, colours.rand_colour)
         self._window.blit(player1, (self._window.get_width() * 0.7, self._window.get_height() * 0.1))
         self._window.blit(result1, (self._window.get_width() * 0.9, self._window.get_height() * 0.1))
-        self._window.blit(player2, (self._window.get_width() * 0.7, self._window.get_height() * 0.2))
-        self._window.blit(result2, (self._window.get_width() * 0.9, self._window.get_height() * 0.2))
+        self._window.blit(player2, (self._window.get_width() * 0.7, self._window.get_height() * 0.15))
+        self._window.blit(result2, (self._window.get_width() * 0.9, self._window.get_height() * 0.15))
+        self._window.blit(game_turn, (self._window.get_width() * 0.7, self._window.get_height() * 0.2))
+        for column in self._game_manager.field.cells:
+            field_not_full = field_not_full or Cell.VOID in column
+        if not field_not_full:
+            self._window.blit(game_over, (self._window.get_width() * 0.7, self._window.get_height() * 0.3))
+            self._window.blit(game_draw, (self._window.get_width() * 0.7, self._window.get_height() * 0.35))
 
     def main_loop(self):
+        pg.mixer.init()
         is_running = True
         timer = pg.time.Clock()
         while is_running:
@@ -169,10 +200,19 @@ class GameWindow:
                     mouse_pos = pg.mouse.get_pos()
                     x, y = mouse_pos
                     if self._field_widget.is_coords_correct(x, y):
+                        if self._game_manager.current_player == 0:
+                            pg.mixer.Sound("Draw_sound_X.mp3").play()
+                        elif self._game_manager.current_player == 1:
+                            pg.mixer.Sound("Draw_sound.mp3").play()
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
             self._window.fill(colours.white)
             self._field_widget.draw(self._window, colours.rand_colour)
             self.show_results()
+            if self._game_manager.is_game_over():
+                self._game_manager.field.new_round()
+                self._game_manager.players[self._game_manager.current_player].result += 1
+                pg.mixer.Sound("New_round.mp3").play()
+                self._game_manager.current_player = 0
             pg.display.update()
 
 
