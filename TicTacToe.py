@@ -213,6 +213,7 @@ class GameWindow:
         result2 = font.render(str(self._game_manager.players[1].result), True, colours.rand_colour)
         game_over = font.render("Game Over", True, colours.rand_colour)
         game_draw = font.render("It's a Game Draw", True, colours.rand_colour)
+        game_tip = font.render("Press 'R' to restart", True, colours.rand_colour)
         game_turn = font.render(str(self._game_manager.players[self._game_manager.current_player].name + "'s turn!"), True, colours.rand_colour)
         self._window.blit(player1, (self._window.get_width() * 0.7, self._window.get_height() * 0.1))
         self._window.blit(result1, (self._window.get_width() * 0.9, self._window.get_height() * 0.1))
@@ -224,6 +225,12 @@ class GameWindow:
         if not field_not_full:
             self._window.blit(game_over, (self._window.get_width() * 0.7, self._window.get_height() * 0.3))
             self._window.blit(game_draw, (self._window.get_width() * 0.7, self._window.get_height() * 0.35))
+            self._window.blit(game_tip, (self._window.get_width() * 0.7, self._window.get_height() * 0.4))
+        elif self._game_manager.is_game_over():
+            self._game_manager.players[self._game_manager.current_player].result += 1
+            pg.mixer.Sound("New_round.mp3").play()
+            self._game_manager.field.new_round()
+            self._game_manager.current_player = 0
 
     def main_loop(self):
         pg.mixer.init()
@@ -234,6 +241,9 @@ class GameWindow:
                 timer.tick(self._fps)
                 if event.type == pg.QUIT or event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                     is_running = False
+                elif event.type == pg.KEYDOWN and event.key == pg.K_r:
+                    self._game_manager.field.new_round()
+                    self._game_manager.current_player = 0
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = pg.mouse.get_pos()
                     x, y = mouse_pos
@@ -245,12 +255,8 @@ class GameWindow:
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
             self._window.fill(colours.white)
             self._field_widget.draw(self._window, colours.rand_colour)
+            pg.time.wait(100)
             self.show_results()
-            if self._game_manager.is_game_over():
-                self._game_manager.players[self._game_manager.current_player].result += 1
-                pg.mixer.Sound("New_round.mp3").play()
-                self._game_manager.field.new_round()
-                self._game_manager.current_player = 0
 
             pg.display.update()
 
