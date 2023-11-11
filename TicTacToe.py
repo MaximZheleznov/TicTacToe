@@ -133,7 +133,6 @@ class GameRoundManager:
                 else:
                     game_over = False
             if game_over:
-                self.current_player = not self.current_player
                 break
             game_over = True
             # Check for three in line crosses or zeros in vertical lines
@@ -145,7 +144,6 @@ class GameRoundManager:
                 else:
                     game_over = False
             if game_over:
-                self.current_player = not self.current_player
                 break
             game_over = True
             # Check for three in line crosses or zeros in primary diagonal
@@ -157,7 +155,6 @@ class GameRoundManager:
                 else:
                     game_over = False
             if game_over:
-                self.current_player = not self.current_player
                 break
             game_over = True
             # Check for three in line crosses or zeros in secondary diagonal
@@ -171,7 +168,6 @@ class GameRoundManager:
                     game_over = False
                 j -= 1
             if game_over:
-                self.current_player = not self.current_player
                 break
         return game_over
 
@@ -222,15 +218,15 @@ class GameWindow:
         self._window.blit(game_turn, (self._window.get_width() * 0.7, self._window.get_height() * 0.2))
         for column in self._game_manager.field.cells:
             field_not_full = field_not_full or Cell.VOID in column
-        if not field_not_full:
+        if self._game_manager.is_game_over():
+            game_winner = font.render(str(self._game_manager.players[not self._game_manager.current_player].name + " WIN!"), True, colours.rand_colour)
+            self._window.blit(game_over, (self._window.get_width() * 0.7, self._window.get_height() * 0.3))
+            self._window.blit(game_winner, (self._window.get_width() * 0.7, self._window.get_height() * 0.35))
+            self._window.blit(game_tip, (self._window.get_width() * 0.7, self._window.get_height() * 0.4))
+        elif not field_not_full:
             self._window.blit(game_over, (self._window.get_width() * 0.7, self._window.get_height() * 0.3))
             self._window.blit(game_draw, (self._window.get_width() * 0.7, self._window.get_height() * 0.35))
             self._window.blit(game_tip, (self._window.get_width() * 0.7, self._window.get_height() * 0.4))
-        elif self._game_manager.is_game_over():
-            self._game_manager.players[self._game_manager.current_player].result += 1
-            pg.mixer.Sound("New_round.mp3").play()
-            self._game_manager.field.new_round()
-            self._game_manager.current_player = 0
 
     def main_loop(self):
         pg.mixer.init()
@@ -242,9 +238,12 @@ class GameWindow:
                 if event.type == pg.QUIT or event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                     is_running = False
                 elif event.type == pg.KEYDOWN and event.key == pg.K_r:
+                    if self._game_manager.is_game_over():
+                        self._game_manager.players[not self._game_manager.current_player].result += 1
                     self._game_manager.field.new_round()
+                    pg.mixer.Sound("New_round.mp3").play()
                     self._game_manager.current_player = 0
-                elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and not self._game_manager.is_game_over():
                     mouse_pos = pg.mouse.get_pos()
                     x, y = mouse_pos
                     if self._field_widget.is_coords_correct(x, y):
@@ -255,9 +254,7 @@ class GameWindow:
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
             self._window.fill(colours.white)
             self._field_widget.draw(self._window, colours.rand_colour)
-            pg.time.wait(100)
             self.show_results()
-
             pg.display.update()
 
 
