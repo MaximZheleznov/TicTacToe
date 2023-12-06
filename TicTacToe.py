@@ -12,7 +12,7 @@ class Cell(Enum):
 
 class Player:
     """Class, which contains player's name and type of game-figure"""
-    def __init__(self, name, character):
+    def __init__(self, name: str, character: Cell):
         self.name = name
         self.character = character
         self.result = 0
@@ -31,49 +31,41 @@ class GameField:
 
 class GameFieldView:
     """Class processes interaction between user and field, where game is drawn"""
-    def __init__(self, field, cell_size):
+    def __init__(self, field: GameField, cell_size: float):
         self._cell_size = cell_size
-        self._cross = Cell.CROSS
-        self._zero = Cell.ZERO
         self._field = field
         self._height = field.height * self._cell_size
         self._width = field.width * self._cell_size
+        self.start_pos_x = self._width / 10
+        self.start_pos_y = self._height / 10
 
-    def is_coords_correct(self, x, y):
+    def is_coords_correct(self, x: float, y: float) -> bool:
         """
         Checks if given coordinates of a click are refer to game field
         :param x: x-coordinate of mouse click
         :param y: y-coordinate of mouse click
-        :return: None
+        :return: bool
         """
         if self._width / 10 < x < self._width + self._width / 10 and self._height / 10 < y < self._height + self._height / 10:
             return True
 
-    def get_cell_clicked(self, x, y):
+    def get_cell_clicked(self, x: float, y: float) -> list:
         """
         Calculates which cell of game field given coordinates refer to and returns it
         :param x: x-coordinate of mouse click
         :param y: y-coordinate of mouse click
         :return: cell, where click was made
         """
-        cell = []
-        if x < self._width / 3 + self._width / 10:
-            cell.append(0)
-        elif x < 2 * self._width / 3 + self._width / 10:
-            cell.append(1)
-        else:
-            cell.append(2)
-
-        if y < self._height / 3 + self._height / 10:
-            cell.append(0)
-        elif y < 2 * self._height / 3 + self._height / 10:
-            cell.append(1)
-        else:
-            cell.append(2)
-
+        cell = [None, None]
+        for i in range(len(self._field.cells)):
+            if self.start_pos_x + self._cell_size * i < x < self.start_pos_x + self._cell_size * i + self._cell_size:
+                cell[0] = i
+        for i in range(len(self._field.cells)):
+            if self.start_pos_y + self._cell_size * i < y < self.start_pos_y + self._cell_size * i + self._cell_size:
+                cell[1] = i
         return cell
 
-    def draw(self, window, colour):
+    def draw(self, window, colour: tuple):
         """
         Draws game field and characters on a given surface
         :param window: Surface, where game field and characters should be drawn
@@ -81,17 +73,21 @@ class GameFieldView:
         :return:None
         """
         line_width = int(window.get_width() / 150)
-        pg.draw.line(window, colour, (self._cell_size + self._width / 10, self._height / 10), (self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
-        pg.draw.line(window, colour, (self._width - self._cell_size + self._width / 10, self._height / 10), (self._width - self._cell_size + self._width / 10, self._height + self._height / 10), line_width)
-        pg.draw.line(window, colour, (self._width / 10, self._cell_size + self._height / 10), (self._width + self._width / 10, self._cell_size + self._height / 10), line_width)
-        pg.draw.line(window, colour, (self._width / 10, self._height - self._cell_size + self._height / 10), (self._width + self. _width / 10, self._height - self._cell_size + self._height / 10), line_width)
+        for i in range(len(self._field.cells) - 1):
+            pg.draw.line(window, colour, (self.start_pos_x + self._cell_size * i + self._cell_size, self.start_pos_y),
+                         (self.start_pos_x + self._cell_size * i + self._cell_size, self._height + self.start_pos_y), line_width)
+        for i in range(len(self._field.cells) - 1):
+            pg.draw.line(window, colour, (self.start_pos_x, self.start_pos_y + self._cell_size * i + self._cell_size),
+                         (self.start_pos_x + self._width, self.start_pos_y + self._cell_size * i + self._cell_size), line_width)
         for column in range(self._field.width):
             for cell in range(self._field.height):
                 if self._field.cells[column][cell] == Cell.CROSS:
-                    pg.draw.line(window, colour, (self._width / 10 + column * self._cell_size + line_width, line_width + self._height / 10 + cell * self._cell_size), (self._width / 10 + column * self._cell_size + self._cell_size - line_width, self._height / 10 + cell * self._cell_size + self._cell_size - line_width), line_width)
-                    pg.draw.line(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size + self._cell_size * cell - line_width), (self._width / 10 + self._cell_size + self._cell_size * column - line_width, self._height / 10 + self._cell_size * cell + line_width), line_width)
+                    pg.draw.line(window, colour, (self.start_pos_x + column * self._cell_size + line_width, line_width + self.start_pos_y + cell * self._cell_size),
+                                 (self.start_pos_x + column * self._cell_size + self._cell_size - line_width, self.start_pos_y + cell * self._cell_size + self._cell_size - line_width), line_width)
+                    pg.draw.line(window, colour, (self.start_pos_x + self._cell_size * column + line_width, self.start_pos_y + self._cell_size + self._cell_size * cell - line_width),
+                                 (self.start_pos_x + self._cell_size + self._cell_size * column - line_width, self.start_pos_y + self._cell_size * cell + line_width), line_width)
                 elif self._field.cells[column][cell] == Cell.ZERO:
-                    pg.draw.ellipse(window, colour, (self._width / 10 + self._cell_size * column + line_width, self._height / 10 + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
+                    pg.draw.ellipse(window, colour, (self.start_pos_x + self._cell_size * column + line_width, self.start_pos_y + self._cell_size * cell + line_width, self._cell_size - 2 * line_width, self._cell_size - 2 * line_width), line_width)
 
 
 class GameRoundManager:
@@ -101,7 +97,7 @@ class GameRoundManager:
         self.current_player = 0
         self.field = GameField()
 
-    def handle_click(self, cell):
+    def handle_click(self, cell: list):
         """
         Handles click, puts character of a current player in given cell, checks if game field is not full
         :param cell: cell, where click was made
@@ -116,7 +112,7 @@ class GameRoundManager:
                 self.field.cells[i][j] = self.players[self.current_player].character
                 self.current_player -= 1
 
-    def is_game_over(self):
+    def is_game_over(self) -> bool:
         """
         Checks if game is not over
         :return: None
@@ -182,7 +178,7 @@ class GameWindow:
         player2 = Player("Player2", Cell.ZERO)
         self._game_manager = GameRoundManager(player1, player2)
         self._window = pg.display.set_mode(self._resolution)
-        self._field_widget = GameFieldView(self._game_manager.field, self._window.get_height()/4)
+        self._field_widget = GameFieldView(self._game_manager.field, self._window.get_height()/(self._game_manager.field.width + 1))
 
     def setup(self):
         """
@@ -245,13 +241,12 @@ class GameWindow:
                     self._game_manager.current_player = 0
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and not self._game_manager.is_game_over():
                     mouse_pos = pg.mouse.get_pos()
-                    x, y = mouse_pos
-                    if self._field_widget.is_coords_correct(x, y):
+                    if self._field_widget.is_coords_correct(*mouse_pos):
                         if self._game_manager.current_player == 0:
                             pg.mixer.Sound("Draw_sound_X.mp3").play()
                         elif self._game_manager.current_player == 1:
                             pg.mixer.Sound("Draw_sound.mp3").play()
-                        self._game_manager.handle_click(self._field_widget.get_cell_clicked(x, y))
+                        self._game_manager.handle_click(self._field_widget.get_cell_clicked(*mouse_pos))
             self._window.fill(colours.white)
             self._field_widget.draw(self._window, colours.rand_colour)
             self.show_results()
