@@ -21,8 +21,8 @@ class Player:
 class GameField:
     """Class processes game field with given parameters"""
     def __init__(self):
-        self.width = 3
-        self.height = 3
+        self.width = 5
+        self.height = self.width
         self.cells = [[Cell.VOID]*self.height for i in range(self.width)]
 
     def new_round(self):
@@ -36,8 +36,8 @@ class GameFieldView:
         self._field = field
         self._height = field.height * self._cell_size
         self._width = field.width * self._cell_size
-        self.start_pos_x = self._width / 10
-        self.start_pos_y = self._height / 10
+        self.start_pos_x = self._cell_size / 2
+        self.start_pos_y = self._cell_size / 2
 
     def is_coords_correct(self, x: float, y: float) -> bool:
         """
@@ -46,7 +46,7 @@ class GameFieldView:
         :param y: y-coordinate of mouse click
         :return: bool
         """
-        if self._width / 10 < x < self._width + self._width / 10 and self._height / 10 < y < self._height + self._height / 10:
+        if self.start_pos_x < x < self._width + self.start_pos_x and self.start_pos_y < y < self._height + self.start_pos_y:
             return True
 
     def get_cell_clicked(self, x: float, y: float) -> list:
@@ -72,7 +72,7 @@ class GameFieldView:
         :param colour: Colour of field and characters
         :return:None
         """
-        line_width = int(window.get_width() / 150)
+        line_width = int(self._cell_size / 10)
         for i in range(len(self._field.cells) - 1):
             pg.draw.line(window, colour, (self.start_pos_x + self._cell_size * i + self._cell_size, self.start_pos_y),
                          (self.start_pos_x + self._cell_size * i + self._cell_size, self._height + self.start_pos_y), line_width)
