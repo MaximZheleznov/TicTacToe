@@ -1,5 +1,5 @@
 import pygame as pg
-import colours
+import settings
 from enum import Enum
 
 
@@ -21,7 +21,7 @@ class Player:
 class GameField:
     """Class processes game field with given parameters"""
     def __init__(self):
-        self.width = 5
+        self.width = 3
         self.height = self.width
         self.cells = [[Cell.VOID]*self.height for i in range(self.width)]
 
@@ -199,14 +199,14 @@ class GameWindow:
         pg.font.init()
         field_not_full = False
         font = pg.font.Font(None, int(self._window.get_height() / 20))
-        player1 = font.render(self._game_manager.players[0].name, True, colours.rand_colour)
-        player2 = font.render(self._game_manager.players[1].name, True, colours.rand_colour)
-        result1 = font.render(str(self._game_manager.players[0].result), True, colours.rand_colour)
-        result2 = font.render(str(self._game_manager.players[1].result), True, colours.rand_colour)
-        game_over = font.render("Game Over", True, colours.rand_colour)
-        game_draw = font.render("It's a Game Draw", True, colours.rand_colour)
-        game_tip = font.render("Press 'R' to restart", True, colours.rand_colour)
-        game_turn = font.render(str(self._game_manager.players[self._game_manager.current_player].name + "'s turn!"), True, colours.rand_colour)
+        player1 = font.render(self._game_manager.players[0].name, True, settings.rand_colour)
+        player2 = font.render(self._game_manager.players[1].name, True, settings.rand_colour)
+        result1 = font.render(str(self._game_manager.players[0].result), True, settings.rand_colour)
+        result2 = font.render(str(self._game_manager.players[1].result), True, settings.rand_colour)
+        game_over = font.render("Game Over", True, settings.rand_colour)
+        game_draw = font.render("It's a Game Draw", True, settings.rand_colour)
+        game_tip = font.render("Press 'R' to restart", True, settings.rand_colour)
+        game_turn = font.render(str(self._game_manager.players[self._game_manager.current_player].name + "'s turn!"), True, settings.rand_colour)
         self._window.blit(player1, (self._window.get_width() * 0.7, self._window.get_height() * 0.1))
         self._window.blit(result1, (self._window.get_width() * 0.9, self._window.get_height() * 0.1))
         self._window.blit(player2, (self._window.get_width() * 0.7, self._window.get_height() * 0.15))
@@ -215,7 +215,7 @@ class GameWindow:
         for column in self._game_manager.field.cells:
             field_not_full = field_not_full or Cell.VOID in column
         if self._game_manager.is_game_over():
-            game_winner = font.render(str(self._game_manager.players[not self._game_manager.current_player].name + " WIN!"), True, colours.rand_colour)
+            game_winner = font.render(str(self._game_manager.players[not self._game_manager.current_player].name + " WIN!"), True, settings.rand_colour)
             self._window.blit(game_over, (self._window.get_width() * 0.7, self._window.get_height() * 0.3))
             self._window.blit(game_winner, (self._window.get_width() * 0.7, self._window.get_height() * 0.35))
             self._window.blit(game_tip, (self._window.get_width() * 0.7, self._window.get_height() * 0.4))
@@ -247,14 +247,14 @@ class GameWindow:
                         elif self._game_manager.current_player == 1:
                             pg.mixer.Sound("Draw_sound.mp3").play()
                         self._game_manager.handle_click(self._field_widget.get_cell_clicked(*mouse_pos))
-            self._window.fill(colours.white)
-            self._field_widget.draw(self._window, colours.rand_colour)
+            self._window.fill(settings.white)
+            self._field_widget.draw(self._window, settings.rand_colour)
             self.show_results()
             pg.display.update()
 
 
 def main():
-    window = GameWindow()
+    window = GameWindow(settings.resolution, settings.fps)
     window.setup()
     window.main_loop()
 
